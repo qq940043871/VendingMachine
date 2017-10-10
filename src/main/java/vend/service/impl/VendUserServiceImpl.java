@@ -16,10 +16,12 @@ import base.util.Page;
 import vend.dao.UserCouponMapper;
 import vend.dao.VendAccountMapper;
 import vend.dao.VendPermissionMapper;
+import vend.dao.VendRolePermissionMapper;
 import vend.dao.VendUserMapper;
 import vend.entity.UserCoupon;
 import vend.entity.VendAccount;
 import vend.entity.VendPermission;
+import vend.entity.VendRolePermission;
 import vend.entity.VendUser;
 import vend.service.VendUserService;
 
@@ -33,6 +35,9 @@ public class VendUserServiceImpl implements VendUserService {
 	VendAccountMapper vendAccountMapper;
 	@Autowired
 	UserCouponMapper userCouponMapper;
+	@Autowired
+	VendRolePermissionMapper vendRolePermissionMapper;
+	
 	/**
 	 * 根据输入信息条件查询用户列表，并分页显示
 	 * @param vendUser
@@ -40,7 +45,14 @@ public class VendUserServiceImpl implements VendUserService {
 	 * @return
 	 */
 	public List<VendUser> listVendUser(VendUser vendUser,String usersArray[],Page page){
-		String title=vendUser.getUsercode()+usersArray.length;
+		if(usersArray.length!=0){
+			int totalNumber = vendUserMapper.countVendUser(vendUser,usersArray);
+			page.setTotalNumber(totalNumber);
+		}else{
+			int totalNumber = vendUserMapper.countVendUser1(vendUser);
+			page.setTotalNumber(totalNumber);
+		}
+		String title=vendUser.getUsercode()+vendUser.getUsername()+usersArray.length;
 		String currentPage=Integer.toString(page.getCurrentPage());
 		if(title==null){
 			title="";
@@ -49,13 +61,40 @@ public class VendUserServiceImpl implements VendUserService {
 		List<VendUser> vendUsers=(List<VendUser>)CacheUtils.get("userCache", key);
 		if(vendUsers==null){
 			if(usersArray.length!=0){
-				int totalNumber = vendUserMapper.countVendUser(vendUser,usersArray);
-				page.setTotalNumber(totalNumber);
 				vendUsers= vendUserMapper.listVendUser(vendUser,usersArray, page);
 			}else{
-				int totalNumber = vendUserMapper.countVendUser1(vendUser);
-				page.setTotalNumber(totalNumber);
 				vendUsers= vendUserMapper.listVendUser1(vendUser,page);
+			}
+			CacheUtils.put("userCache",key, vendUsers);
+		}
+		return vendUsers;
+	}
+	/**
+	 * 根据输入信息条件查询用户列表（包括消费用户），并分页显示
+	 * @param vendUser
+	 * @param page
+	 * @return
+	 */
+	public List<VendUser> listVendUserXF(VendUser vendUser,String usersArray[],Page page){
+		if(usersArray.length!=0){
+			int totalNumber = vendUserMapper.countVendUser(vendUser,usersArray);
+			page.setTotalNumber(totalNumber);
+		}else{
+			int totalNumber = vendUserMapper.countVendUser1(vendUser);
+			page.setTotalNumber(totalNumber);
+		}
+		String title=vendUser.getUsercode()+vendUser.getUsername()+usersArray.length;
+		String currentPage=Integer.toString(page.getCurrentPage());
+		if(title==null){
+			title="";
+		}
+		String key="key_listVendUserXF"+title+currentPage;
+		List<VendUser> vendUsers=(List<VendUser>)CacheUtils.get("userCache", key);
+		if(vendUsers==null){
+			if(usersArray.length!=0){
+				vendUsers= vendUserMapper.listVendUserXF(vendUser,usersArray, page);
+			}else{
+				vendUsers= vendUserMapper.listVendUser1XF(vendUser,page);
 			}
 			CacheUtils.put("userCache",key, vendUsers);
 		}
@@ -68,8 +107,11 @@ public class VendUserServiceImpl implements VendUserService {
 	 */
 	public int insertVendUser(VendUser vendUser){
 		Date createTime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());
-		String usercode=Function.getUsercode();
-		vendUser.setUsercode(usercode);
+		String usercode=vendUser.getUsercode();
+		if(usercode==null||"".equals(usercode)){
+			usercode=Function.getUsercode();
+			vendUser.setUsercode(usercode);
+		}
 		vendUser.setCreateTime(createTime);
 		vendUser.setUpdateTime(createTime);
 		
@@ -83,13 +125,23 @@ public class VendUserServiceImpl implements VendUserService {
 		vendAccount.setUpdateTime(createTime);
 		vendAccountMapper.insert(vendAccount);
 		
-		//注册的新用户会获得一个优惠券
-		UserCoupon userCoupon=new UserCoupon();
-		userCoupon.setUsercode(usercode);
-		userCoupon.setCouponId(1);
-		userCoupon.setCreateTime(createTime);
-		userCouponMapper.insert(userCoupon);
+		//注册的新消费用户会获得一个优惠券
+		if(vendUser.getRoleId()==5){
+			UserCoupon userCoupon=new UserCoupon();
+			userCoupon.setUsercode(usercode);
+			userCoupon.setCouponId(1);
+			userCoupon.setExtend1("1");
+			userCoupon.setCreateTime(createTime);
+			userCouponMapper.insert(userCoupon);
+		}
 		
+		//自动获得该角色所有权限
+		List<VendRolePermission> vendRolePermissions=vendRolePermissionMapper.selectByRoleId(vendUser.getRoleId());
+		String permissionlist=",";
+		for(VendRolePermission vendRolePermission:vendRolePermissions){
+			permissionlist+=vendRolePermission.getPermissionId()+",";
+		}
+		vendUser.setPermissionList(permissionlist);
 		int isOk=vendUserMapper.insertSelective(vendUser);
 		if(isOk==1){
 			CacheUtils.clear();
@@ -154,6 +206,20 @@ public class VendUserServiceImpl implements VendUserService {
 	 */
 	public VendUser selectByUsername(String username){
 		String key="key_selectByUsername"+username;
+		VendUser vendUser=(VendUser)CacheUtils.get("userCache", key);
+		if(vendUser==null){
+			vendUser=vendUserMapper.selectByUsername(username);
+			CacheUtils.put("userCache", key, vendUser);
+		}
+		return vendUser;
+	}
+	/**
+	 * 按照username查找消费用户 
+	 * @param username
+	 * @return
+	 */
+	public VendUser selectByUsernameXF(String username){
+		String key="key_selectByUsernameXF"+username;
 		VendUser vendUser=(VendUser)CacheUtils.get("userCache", key);
 		if(vendUser==null){
 			vendUser=vendUserMapper.selectByUsername(username);
@@ -245,7 +311,7 @@ public class VendUserServiceImpl implements VendUserService {
 				}
 			}else{
 				for(String permissionid:set1){
-					if(permissionlist.indexOf(permissionid+",")!=-1){
+					if(permissionlist.indexOf(","+permissionid+",")!=-1){
 						VendPermission vendPermission=vendPermissionMapper.selectByPrimaryKey(Integer.parseInt(permissionid));
 						if(vendPermission!=null){
 							set2.add(vendPermission.getPermissionName());

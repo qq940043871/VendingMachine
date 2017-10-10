@@ -58,7 +58,6 @@ width:100%;
 						     </select>&nbsp;&nbsp;
                           </th>
 		                  <th><input type="submit" value="搜索" class="btn btn-info"/>&nbsp;&nbsp;</th>
-		                  <td><input type="button" onclick="dels('account');" value="批量删除" class="btn btn-danger"/></td>
 		                </tr>
 			      </table>
 			
@@ -72,7 +71,6 @@ width:100%;
 		                  <th>操作类型</th>
 		                  <th>金额</th>
 		                  <th>创建时间</th>
-		                  <th>操作</th>
 		                </tr>
 			         </thead>
 			         <tbody>
@@ -80,15 +78,11 @@ width:100%;
 				           <tr class="gradeX">
 					          <th><input type="checkbox" name="Id" id="Id" value="${vendAccountDetail.usercode}"/></th>
 					          <td style="text-align:center;">${st.index+1}</td>
-			                  <td>${vendAccountDetail.usercode}</td>
-			                  <td>${vendAccount.extend2}</td>
+			                  <td>${vendAccountDetail.extend3}</td>
+			                  <td>${vendAccountDetail.extend2}</td>
 			                  <td><code:itemname codeno="ACCOUNTTYPE" itemno="${vendAccountDetail.type}"></code:itemname></td>
 			                  <td>${vendAccountDetail.amount}</td>
 			                  <td><fmt:formatDate value="${vendAccountDetail.createTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
-			                  <td class="center">
-			                     <a href="${vendAccountDetail.usercode}/edit" class="btn btn-success icon-edit"/></a>&nbsp;&nbsp;
-			                     <a href="javascript:void(0);" onclick="delconfirm('${vendAccountDetail.usercode}');" class="btn btn-danger  icon-trash"/></a>
-			                  </td>
 			                </tr>
 			           </c:forEach>
 			         </tbody>
@@ -100,7 +94,7 @@ width:100%;
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                 <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>

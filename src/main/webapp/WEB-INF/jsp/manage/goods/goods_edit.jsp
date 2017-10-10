@@ -57,6 +57,14 @@
 	                  <sf:hidden path="pic" class="filepath"/>
 	                    <a href="<%=basePath1%>${vendGoods.pic}" target="_blank" class="icon-picture" style="color:green;">查看</a>
 	                  <span for="required" generated="true" class="help-inline"> <sf:errors path="pic" cssClass="errors"  style="color:#b94a48;"></sf:errors></span>
+	                <span><c:choose>
+                         <c:when test="${vendGoods.pic!=''}">
+                           <img src="<%=basePath1%>${vendGoods.pic}" style="width:70px;height:50px;" class="imgpic"/>
+                         </c:when>
+                         <c:otherwise>
+                           <img src="" class="imgpic"/>
+                         </c:otherwise>
+                        </c:choose></span>
 	                </div>
 	              </div>
 	             
@@ -67,6 +75,23 @@
 	                 <span for="required" generated="true" class="help-inline"> <sf:errors path="price" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
 	                </div>
 	              </div>
+	              
+	              <div class="control-group">
+	                <label class="control-label">热饮通道号</label>
+	                <div class="controls">
+	                 <sf:input path="heatChno"/>
+	                 <span for="required" generated="true" class="help-inline"><sf:errors path="heatChno" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
+	                </div>
+	               </div>
+	                
+	              <div class="control-group">
+	                <label class="control-label">冷饮通道号</label>
+	                <div class="controls">
+	                  <sf:input path="coldChno"/>
+	                 <span for="required" generated="true" class="help-inline"><sf:errors path="coldChno" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
+	                </div>
+	              </div>
+	              
 	              <div class="control-group">
 	                <label class="control-label">描述</label>
 	                <div class="controls">

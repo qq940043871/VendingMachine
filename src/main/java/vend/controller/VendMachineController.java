@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +27,20 @@ import com.alibaba.fastjson.JSONObject;
 import base.util.CacheUtils;
 import base.util.DateUtil;
 import base.util.Function;
+import base.util.JsonUtil;
 import base.util.Page;
 import vend.entity.CodeLibrary;
 import vend.entity.VendAd;
+import vend.entity.VendGoods;
 import vend.entity.VendMachine;
+import vend.entity.VendMachineInt;
 import vend.entity.VendOrder;
 import vend.entity.VendShopQrcode;
 import vend.entity.VendUser;
 import vend.service.CodeLibraryService;
 import vend.service.VendAdService;
+import vend.service.VendGoodsService;
+import vend.service.VendMachineIntService;
 import vend.service.VendMachineService;
 import vend.service.VendOrderService;
 import vend.service.VendShopQrcodeService;
@@ -44,11 +50,14 @@ import vend.service.VendUserService;
 @RequestMapping("/machine")
 public class VendMachineController{
 	public static Logger logger = Logger.getLogger(VendMachineController.class);
-	
 	@Autowired
 	VendMachineService vendMachineService;
 	@Autowired
+	VendMachineIntService vendMachineIntService;
+	@Autowired
 	VendAdService vendAdService;
+	@Autowired
+	VendGoodsService vendGoodsService;
 	@Autowired
 	VendUserService vendUserService;
 	@Autowired
@@ -80,6 +89,14 @@ public class VendMachineController{
 		VendUser user=(VendUser)session.getAttribute("vendUser");
 		List<CodeLibrary> usestatus=codeLibraryService.selectByCodeNo("USESTATUS");
 		model.addAttribute("usestatus", usestatus);
+		
+		if(vendMachine.getMachineCode()!=null){
+			model.addAttribute("machineCode",vendMachine.getMachineCode());
+		}
+		if(vendMachine.getMachineName()!=null){
+			model.addAttribute("machineName",vendMachine.getMachineName());
+		}
+		
 		List<VendMachine> vendMachines = vendMachineService.listVendMachine(vendMachine, page);
 		String userlist="";
 		if(user!=null&&user.getUsercode()!=null){//上级账号
@@ -175,31 +192,70 @@ public class VendMachineController{
 		if(vendMachine1!=null){
 			br.rejectValue("machineId", "MACHINEIDREPPEAT", "该机器ID已被绑定");
 		}
-		VendMachine vendMachine2=vendMachineService.selectByMachineCode(vendMachine.getMachineCode());
-		if(vendMachine2!=null){
-			br.rejectValue("machineId", "MACHINECODEREPPEAT", "该机器码已被绑定");
-		}
     	if(br.hasErrors()){
     		return "manage/machine/machine_add";
     	}
+    	vendMachine.setMachineType("gyp206");
     	vendMachineService.insertVendMachine(vendMachine);
     	return "redirect:machines";
 	}
     /**
-	 * 跳转机器修改界面
+	 * 跳转投放广告界面
 	 * @param model
 	 * @return
 	 */
-	@RequiresPermissions({"machine:edit"})
-	@RequestMapping(value="/{id}/edit",method=RequestMethod.GET)
-	public String edit(Model model,@PathVariable int id){
-		List<VendAd> ads=vendAdService.findAll();
-		model.addAttribute("ads", ads);
-		List<VendShopQrcode> vendShopQrcodes=vendShopQrcodeService.selectByType("1");
-		model.addAttribute("vendShopQrcodes", vendShopQrcodes);
+	@RequiresPermissions({"machine:adputon"})
+	@RequestMapping(value="/{id}/adputon",method=RequestMethod.GET)
+	public String adPuton(Model model,@PathVariable int id){
 		VendMachine vendMachine=vendMachineService.getOne(id);
-		model.addAttribute(vendMachine);
-		return "manage/machine/machine_edit";
+		if(vendMachine!=null&&vendMachine.getMachineId()!=null){
+			VendAd vendAd=vendAdService.selectByMachineId(vendMachine.getMachineId());
+			if(vendAd!=null){
+				model.addAttribute(vendAd);
+			}else{
+				vendAd=new VendAd();
+				model.addAttribute(vendAd);
+			}
+			List<CodeLibrary> adscreens=codeLibraryService.selectByCodeNo("ADSCREEN");
+			String adtypename="";
+			for(CodeLibrary codeLibrary:adscreens){
+				if(vendAd.getExtend2()!=null&&codeLibrary.getItemno().equals(vendAd.getExtend2())){
+					adtypename=codeLibrary.getItemname();
+				}
+			}
+			model.addAttribute("adtypename", adtypename);
+			model.addAttribute("adscreens", adscreens);
+		}
+		
+		model.addAttribute("id",id);
+    	List<CodeLibrary> uppictypes=codeLibraryService.selectByCodeNo("UPPICTYPE");
+		model.addAttribute("uppictypes", uppictypes);
+		List<CodeLibrary> upvideotypes=codeLibraryService.selectByCodeNo("UPVIDEOTYPE");
+		model.addAttribute("upvideotypes", upvideotypes);
+		return "manage/machine/machine_adputon";
+	}
+	/**
+	 * 跳转投放商户二维码界面
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions({"machine:qrcodeputon"})
+	@RequestMapping(value="/{id}/qrcodeputon",method=RequestMethod.GET)
+	public String qrcodePuton(Model model,@PathVariable int id){
+		VendMachine vendMachine=vendMachineService.getOne(id);
+		if(vendMachine!=null&&vendMachine.getMachineId()!=null){
+			VendShopQrcode vendShopQrcode=vendShopQrcodeService.selectByMachineId(vendMachine.getMachineId());
+			if(vendShopQrcode!=null){
+				model.addAttribute(vendShopQrcode);
+			}else{
+				vendShopQrcode=new VendShopQrcode();
+				model.addAttribute(vendShopQrcode);
+			}
+		}
+		List<CodeLibrary> uppictypes=codeLibraryService.selectByCodeNo("UPPICTYPE");
+		model.addAttribute("uppictypes", uppictypes);
+		model.addAttribute("id",id);
+		return "manage/machine/machine_qrcodeputon";
 	}
 	/**
 	 * 修改机器信息
@@ -257,6 +313,7 @@ public class VendMachineController{
 	@RequiresPermissions({"machine:unbind"})
     @RequestMapping(value="/{id}/{transusername}/unbind")
   	public String unbind(@PathVariable Integer id,@PathVariable String transusername,HttpServletResponse response) throws IOException{
+		response.setCharacterEncoding("UTF-8");
 		JSONObject json = new JSONObject();
 	    json.put("success", 0);
 	    json.put("msg", "解绑失败");
@@ -387,5 +444,126 @@ public class VendMachineController{
 		model.addAttribute("page", page);
 		model.addAttribute("list",list);
 		return "manage/machine/machine_sales";
+	}
+	/**
+	 * 进到生成机器ID界面
+	 * @return
+	 */
+	@RequestMapping(value="/togenerateId")
+	public String generateId(){
+		return "manage/machine/machine_generateid";
+	}
+	/**
+	 * 生成机器ID
+	 * @param response
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value="/generateId",method=RequestMethod.POST)
+	public void generateId(HttpServletResponse response) throws IOException{
+		response.setCharacterEncoding("UTF-8");
+		JSONObject json = new JSONObject();
+		json.put("machineId", "");
+		String machineId=Function.getmachineId();
+		json.put("machineId", machineId);
+		response.getWriter().append(json.toJSONString());
+	}
+	/**
+	 * 跳到初始化机器信息界面
+	 * @param model
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value="/{id}/initialize",method=RequestMethod.GET)
+	public String initialize(Model model,@PathVariable int id){
+		List<VendGoods> vendGoodss=vendGoodsService.findAll();
+		List<VendMachineInt> vendMachineInts=vendMachineIntService.selectByBelongMachine(id);
+		if(vendMachineInts.size()==0){
+			for(VendGoods vendGoods:vendGoodss){
+				VendMachineInt vendMachineInt=new VendMachineInt();
+				vendMachineInt.setBelongMachine(id);
+				vendMachineInt.setGoodsId(vendGoods.getId());
+				vendMachineInt.setGoodsName(vendGoods.getGoodsName());
+				vendMachineInt.setHotStatus("0");
+				vendMachineIntService.insertVendMachineInt(vendMachineInt);
+				vendMachineInts.add(vendMachineInt);
+				
+				vendMachineInt.setBelongMachine(id);
+				vendMachineInt.setGoodsId(vendGoods.getId());
+				vendMachineInt.setGoodsName(vendGoods.getGoodsName());
+				vendMachineInt.setHotStatus("1");
+				vendMachineIntService.insertVendMachineInt(vendMachineInt);
+				vendMachineInts.add(vendMachineInt);
+			}
+		}
+		model.addAttribute("id", id);
+		model.addAttribute("vendMachineInts", vendMachineInts);
+		return "manage/machine/machine_initialize"; 
+	}
+	/**
+	 * 初始化机器信息
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value="/initialize",method=RequestMethod.POST)
+	public String initialize(HttpServletRequest request,HttpServletResponse response) throws IOException{
+		response.setCharacterEncoding("UTF-8");
+		JSONObject json = new JSONObject();
+		String success="0";
+		String msg="初始化失败";
+		String vendMachineIntArray[]=request.getParameterValues("vendMachineIntArray");
+		for(int i=0;i<vendMachineIntArray.length;i++){
+			String vendMachineIntJson=vendMachineIntArray[i];
+			Map<String,Object> vendMachineIntMap=JsonUtil.getMap4Json(vendMachineIntJson);
+			VendMachineInt vendMachineInt=vendMachineIntService.getOne(Function.getInt(vendMachineIntMap.get("id").toString(),0));
+		    if(vendMachineInt!=null){
+		    	String hot=vendMachineInt.getHotStatus().equals("0")?"冷":"热";
+		    	if(vendMachineIntMap.get("waterOutTime").toString().equals("")){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出水时间不能为空";
+		    		break;
+		    	}
+		    	if(!StringUtils.isNumeric(vendMachineIntMap.get("waterOutTime").toString())){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出水时间只能填数字";
+		    		break;
+		    	}
+		    	if(Function.getInt(vendMachineIntMap.get("waterOutTime").toString(),0)<10&&Function.getInt(vendMachineIntMap.get("waterOutTime").toString(),0)>999){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出水时间只能必须在10~999之间";
+		    		break;
+		    	}
+		    	if(vendMachineIntMap.get("grainOutTime").toString().equals("")){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出料时间不能为空";
+		    		break;
+		    	}
+		    	if(!StringUtils.isNumeric(vendMachineIntMap.get("grainOutTime").toString())){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出料时间只能填数字";
+		    		break;
+		    	}
+		    	if(Function.getInt(vendMachineIntMap.get("grainOutTime").toString(),0)<10&&Function.getInt(vendMachineIntMap.get("waterOutTime").toString(),0)>999){
+		    		success="0";
+		    		msg="商品"+vendMachineInt.getGoodsName()+"（"+hot+"）的出料时间只能必须在10~999之间";
+		    		break;
+		    	}
+		    	vendMachineInt.setWareName(vendMachineIntMap.get("wareName").toString());
+		    	vendMachineInt.setWaterOutTime(Function.getInt(vendMachineIntMap.get("waterOutTime").toString(),0));
+		    	vendMachineInt.setGrainOutTime(Function.getInt(vendMachineIntMap.get("grainOutTime").toString(),0));
+		    	vendMachineInt.setExtend1("1");
+		    	int isOk=vendMachineIntService.editVendMachineInt(vendMachineInt);
+		    	if(isOk==1){
+		    		success="1";
+			    	msg="初始化成功";
+		    	}
+		    }
+		}
+		json.put("success", success);
+		json.put("msg", msg);
+		response.getWriter().append(json.toJSONString());
+		return null;
 	}
 }

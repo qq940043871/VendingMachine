@@ -1,7 +1,8 @@
 package base.util;
 
 import java.io.IOException;  
-import java.io.UnsupportedEncodingException;  
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;  
 import java.util.ArrayList;  
 import java.util.Map;  
@@ -35,16 +36,16 @@ public class HttpClientUtil {
     private static void init() {  
         if (cm == null) {  
             cm = new PoolingHttpClientConnectionManager();  
-            cm.setMaxTotal(50);// �������ӳ����������  
-            cm.setDefaultMaxPerRoute(5);// ÿ·�������������Ĭ��ֵ��2  
+            cm.setMaxTotal(50);// 整个连接池最大连接数  
+            cm.setDefaultMaxPerRoute(5);// 每路由最大连接数，默认值是2    
         }  
     }  
   
     /** 
-     * ͨ�����ӳػ�ȡHttpClient 
+     * 通过连接池获取HttpClient 
      *  
      * @return 
-     */  
+     */   
     private static CloseableHttpClient getHttpClient() {  
         init();  
         return HttpClients.custom().setConnectionManager(cm).build();  
@@ -57,6 +58,15 @@ public class HttpClientUtil {
      */  
     public static String httpGetRequest(String url) {  
         HttpGet httpGet = new HttpGet(url);  
+        return getResult(httpGet);  
+    }  
+    /** 
+     *   
+     * @param uri
+     * @return
+     */
+    public static String httpGetRequest(URI uri) {  
+        HttpGet httpGet = new HttpGet(uri);  
         return getResult(httpGet);  
     }  
   
@@ -122,11 +132,11 @@ public class HttpClientUtil {
     }  
   
     /** 
-     * ����Http���� 
+     * 处理Http请求 
      *  
      * @param request 
      * @return 
-     */  
+     */   
     private static String getResult(HttpRequestBase request) {  
         // CloseableHttpClient httpClient = HttpClients.createDefault();  
         CloseableHttpClient httpClient = getHttpClient();  

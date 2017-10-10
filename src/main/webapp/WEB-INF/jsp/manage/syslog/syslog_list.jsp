@@ -31,7 +31,7 @@
 <!--Action boxes-->
   <div class="container-fluid">
     <div class="row fluid">
-      <sf:form action="orders" method="post" id="Paramform" class="form-horizontal">
+      <sf:form action="syslogs" method="post" id="Paramform" class="form-horizontal">
       <input type="hidden" name="currentPage" id="currentPage" value="1" />
 		<div class="span12">
 		  <div class="widget-box">
@@ -42,12 +42,13 @@
 			  <div class="widget-content">
 			      <table style="margin-bottom:5px;">
 			            <tr>
+			            <th>用户code:</th>
+			              <th><input type="text" name="usercode" id="usercode" value="${usercode }" placeholder="按用户code搜索"/>&nbsp;&nbsp;</th>
 			              <th>用户名:</th>
-			              <th><input type="text" name="username" id="usercode" placeholder="按用户名搜索"/>&nbsp;&nbsp;</th>
-			              <th>用户code:</th>
-			              <th><input type="text" name="usercode" id="usercode" placeholder="按用户code搜索"/>&nbsp;&nbsp;</th>
+			              <th><input type="text" name="username" id="username"  value="${username }" placeholder="按用户名搜索"/>&nbsp;&nbsp;</th>
+			              
 		                  <th>描述:</th>
-			              <th><input type="text" name="operDescription" id="operDescription" placeholder="按描述搜索"/>&nbsp;&nbsp;</th>
+			              <th><input type="text" name="operDescription" id="operDescription" value="${operDescription }" placeholder="按描述搜索"/>&nbsp;&nbsp;</th>
 		                  <th><input type="submit" value="搜索" class="btn btn-info"/>&nbsp;&nbsp;</th>
 		                </tr>
 			      </table>
@@ -87,7 +88,7 @@
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>

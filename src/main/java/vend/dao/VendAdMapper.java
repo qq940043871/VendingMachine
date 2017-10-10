@@ -19,12 +19,14 @@ public interface VendAdMapper {
     int updateByPrimaryKeySelective(VendAd record);
 
     int updateByPrimaryKey(VendAd record);
-    /**下为自定义方法 */
+    /**自定义方法 */
     List<VendAd> listVendAd(@Param("vendAd") VendAd vendAd, @Param("page") Page page);
     
     int countVendAd(VendAd vendAd);
     
     void insertBatch(List<VendAd> list);
+    
+    VendAd selectByMachineId(String machineId);
     
     int deleteBatch(int ids[]);
     

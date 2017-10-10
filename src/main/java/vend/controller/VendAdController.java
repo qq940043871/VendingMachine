@@ -1,7 +1,9 @@
 package vend.controller;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -19,8 +21,10 @@ import base.util.Function;
 import base.util.Page;
 import vend.entity.CodeLibrary;
 import vend.entity.VendAd;
+import vend.entity.VendUser;
 import vend.service.CodeLibraryService;
 import vend.service.VendAdService;
+import vend.service.VendParaService;
 
 @Controller
 @RequestMapping("/ad")
@@ -31,6 +35,8 @@ public class VendAdController{
 	VendAdService vendAdService;
 	@Autowired
 	CodeLibraryService codeLibraryService;
+	@Autowired
+	VendParaService vendParaService;
 	/**
 	 * 根据输入信息条件查询广告列表，并分页显示
 	 * @param model
@@ -50,10 +56,20 @@ public class VendAdController{
 		}
 		logger.info(page.toString());
 		logger.info(vendAd.toString());
+		HttpSession session=request.getSession();
+    	VendUser user=(VendUser)session.getAttribute("vendUser");
+    	if(user!=null&&user.getUsercode()!=null){
+    		vendAd.setUsercode(user.getUsercode());
+    	}
 		List<CodeLibrary> adscreens=codeLibraryService.selectByCodeNo("ADSCREEN");
 		model.addAttribute("adscreens", adscreens);
 		List<VendAd> vendAds = vendAdService.listVendAd(vendAd, page);
-		model.addAttribute("vendAds",vendAds);
+		List<VendAd> list=new ArrayList<VendAd>();
+		for(VendAd vendAd1:vendAds){
+			if(!vendAd1.getType().equals("5"))
+			list.add(vendAd1);
+		}
+		model.addAttribute("vendAds",list);
 		return "manage/ad/ad_list";
 	}
 	/**
@@ -93,6 +109,23 @@ public class VendAdController{
     	if(br.hasErrors()){
     		return "manage/ad/ad_add";
     	}
+    	HttpSession session=request.getSession();
+    	VendUser user=(VendUser)session.getAttribute("vendUser");
+    	if(user!=null&&user.getUsercode()!=null){
+    		vendAd.setUsercode(user.getUsercode());
+    	}
+    	if(user.getRoleId()==1){//广告信息所属的用户级别
+    		vendAd.setType("1");
+    	}
+    	if(user.getRoleId()==2){
+    		vendAd.setType("2");
+    	}
+    	if(user.getRoleId()==3){
+    		vendAd.setType("3");
+    	}
+    	if(user.getRoleId()==4){
+    		vendAd.setType("4");
+    	}
     	vendAdService.insertVendAd(vendAd);
     	return "redirect:ads";
 	}
@@ -111,6 +144,13 @@ public class VendAdController{
 		List<CodeLibrary> upvideotypes=codeLibraryService.selectByCodeNo("UPVIDEOTYPE");
 		model.addAttribute("upvideotypes", upvideotypes);
 		VendAd vendAd=vendAdService.getOne(id);
+		String adtypename="";
+		for(CodeLibrary codeLibrary:adscreens){
+			if(vendAd.getExtend2()!=null&&codeLibrary.getItemno().equals(vendAd.getExtend2())){
+				adtypename=codeLibrary.getItemname();
+			}
+		}
+		model.addAttribute("adtypename", adtypename);
 		model.addAttribute(vendAd);
 		return "manage/ad/ad_edit";
 	}
@@ -134,8 +174,17 @@ public class VendAdController{
     	if(br.hasErrors()){
     		return "manage/ad/ad_edit";
     	}
+    	
     	vendAdService.editVendAd(vendAd);
-		return "redirect:ads";
+    	String returnStr="";
+    	if(vendAd.getType().equals("5")){
+    		int extend4=Function.getInt(vendAd.getExtend4(),0);
+    		String bathPath=vendParaService.selectByParaCode("basePath");
+    		returnStr="redirect:"+bathPath+"/machine/"+extend4+"/adputon";
+    	}else{
+    		returnStr="redirect:ads";
+    	}
+		return returnStr;
 	}
     /**
      * 删除广告信息
@@ -164,6 +213,18 @@ public class VendAdController{
     		idArray1[i]=Function.getInt(idArray[i], 0);
     	}
     	vendAdService.delVendAds(idArray1);
+  		return "redirect:/ad/ads";
+  	}
+	/**
+	 * 收回广告投放
+	 * @param id
+	 * @return
+	 */
+    @RequestMapping(value="/${id}/shad")
+  	public String shad(@PathVariable int id){
+    	VendAd vendAd =vendAdService.getOne(id);
+    	vendAd.setExtend3("0");
+    	vendAdService.editVendAd(vendAd);
   		return "redirect:/ad/ads";
   	}
 }

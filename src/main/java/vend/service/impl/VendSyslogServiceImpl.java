@@ -19,39 +19,28 @@ public class VendSyslogServiceImpl implements VendSyslogService {
 	@Autowired
 	VendSyslogMapper vendSyslogMapper;
 	/**
-	 * 根据输入信息条件查询日志，并分页显示
+	 * 鏍规嵁杈撳叆淇℃伅鏉′欢鏌ヨ鏃ュ織锛屽苟鍒嗛〉鏄剧ず
 	 * @param vendSyslog
 	 * @param page
 	 * @return
 	 */
 	public List<VendSyslog> listVendSyslog(VendSyslog vendSyslog, Page page){
 		// TODO Auto-generated method stub
-		String title=vendSyslog.getUsercode();
-		String currentPage=Integer.toString(page.getCurrentPage());
-		if(title==null){
-			title="";
-		}
-		String key="key_listVendSyslog"+title+currentPage;
-		List<VendSyslog> vendSyslogs=(List<VendSyslog>)CacheUtils.get("codeCache", key);
-		if(vendSyslogs==null){
-			int totalNumber = vendSyslogMapper.countVendSyslog(vendSyslog);
-			page.setTotalNumber(totalNumber);
-			page.setPageNumber(20);
-			vendSyslogs = vendSyslogMapper.listVendSyslog(vendSyslog, page);
-			CacheUtils.put("codeCache",key, vendSyslogs);
-		}
-		return vendSyslogs;
+		int totalNumber = vendSyslogMapper.countVendSyslog(vendSyslog);
+		page.setTotalNumber(totalNumber);
+		page.setPageNumber(20);
+		return vendSyslogMapper.listVendSyslog(vendSyslog, page);
 	}
 	
 	/**
-	 * 修改一个日志
+	 * 淇敼涓�涓棩蹇�
 	 * @param vendSyslog
 	 */
 	public int editVendSyslog(VendSyslog vendSyslog){
 		return vendSyslogMapper.updateByPrimaryKeySelective(vendSyslog);
 	}
 	/**
-	 * 添加一个日志
+	 * 娣诲姞涓�涓棩蹇�
 	 * @param vendSyslog
 	 */
 	public int insertVendSyslog(VendSyslog vendSyslog){
@@ -65,7 +54,7 @@ public class VendSyslogServiceImpl implements VendSyslogService {
 	}
 	
 	/**
-	 * 删除一个日志
+	 * 鍒犻櫎涓�涓棩蹇�
 	 * @param id
 	 */
 	public int deleteVendSyslog(int id){
@@ -77,7 +66,7 @@ public class VendSyslogServiceImpl implements VendSyslogService {
 	}
 	
 	/**
-	 * 批量删除日志
+	 * 鎵归噺鍒犻櫎鏃ュ織
 	 * @param ids
 	 */
 	public void deleteVendSyslogs(int[] ids){
@@ -88,7 +77,7 @@ public class VendSyslogServiceImpl implements VendSyslogService {
 	}
 	
 	/**
-	 * 根据ID获取日志信息
+	 * 鏍规嵁ID鑾峰彇鏃ュ織淇℃伅
 	 * @param id
 	 * @return
 	 */

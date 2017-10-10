@@ -1,29 +1,42 @@
 package vend.service.impl;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import base.util.CacheUtils;
 import base.util.DateUtil;
+import base.util.HttpClientUtil;
 import base.util.Page;
+import base.util.SysPara;
+import net.sf.json.JSONObject;
 import vend.dao.VendGoodsMapper;
 import vend.entity.VendGoods;
+import vend.entity.VendMachine;
+import vend.entity.VendOrder;
 import vend.service.VendGoodsService;
 
 @Service
 public class VendGoodsServiceImpl implements VendGoodsService {
+	public static Logger logger = Logger.getLogger(VendGoodsServiceImpl.class);
 	@Autowired
 	VendGoodsMapper vendGoodsMapper;
 	/**
-	 * 鏍规嵁杈撳叆淇℃伅鏉′欢鏌ヨ鍟嗗搧鍒楄〃锛屽苟鍒嗛〉鏄剧ず
+	 * 商品列表
 	 * @param vendGoods
 	 * @param page
 	 * @return
 	 */                                                                   
 	public List<VendGoods> listVendGoods(VendGoods vendGoods,Page page){
+		int totalNumber = vendGoodsMapper.countVendGoods(vendGoods);
+		page.setTotalNumber(totalNumber);
 		String title=vendGoods.getGoodsName();
 		String currentPage=Integer.toString(page.getCurrentPage());
 		if(title==null){
@@ -32,15 +45,13 @@ public class VendGoodsServiceImpl implements VendGoodsService {
 		String key="key_listVendGoods"+title+currentPage;
 		List<VendGoods> vendGoodss=(List<VendGoods>)CacheUtils.get("goodsCache", key);
 		if(vendGoodss==null){
-			int totalNumber = vendGoodsMapper.countVendGoods(vendGoods);
-			page.setTotalNumber(totalNumber);
 			vendGoodss= vendGoodsMapper.listVendGoods(vendGoods, page);
 			CacheUtils.put("goodsCache",key, vendGoodss);
 		}
 		return vendGoodss;
 	}
 	/**
-	 * 娣诲姞鍟嗗搧
+	 * 添加
 	 * @param vendGoods
 	 * @return
 	 */
@@ -55,20 +66,19 @@ public class VendGoodsServiceImpl implements VendGoodsService {
 		return isOk;
 	}
 	/**
-	 * 修改商品
+	 * 修改
 	 * @param vendGoods
 	 * @return
 	 */
 	public int editVendGoods(VendGoods vendGoods){
 		int isOk=vendGoodsMapper.updateByPrimaryKeySelective(vendGoods);
-		//淇敼鍚庡垹闄ょ紦瀛�
 		if(isOk==1){
 			CacheUtils.clear();
 		}
 		return isOk;
 	}
 	/**
-	 * 鍒犻櫎涓�涓晢鍝�
+	 * 删除
 	 * @param id
 	 */
 	public void delVendGoods(int id){
@@ -113,5 +123,56 @@ public class VendGoodsServiceImpl implements VendGoodsService {
 			CacheUtils.put("goodsCache", key, vendGoodss);
 		}
 		return vendGoodss;
+	}
+	/**
+	 * 售卖商品指令
+	 * @param vendMachine
+	 * @param vendGoods
+	 * @param orderId
+	 */
+	public void sellGoods(VendMachine vendMachine,VendGoods vendGoods,VendOrder vendOrder,int heat){
+		JSONObject payload = new JSONObject();
+		payload.accumulate("device_id", vendMachine.getMachineId());
+		payload.accumulate("operation", "sell");
+		payload.accumulate("order", vendOrder.getOrderId());
+		//商品详情
+		JSONObject orderGoods = new JSONObject();
+		if(heat==0){
+			orderGoods.accumulate("chNo", vendGoods.getColdChno());	
+		}else if(heat==1){
+			orderGoods.accumulate("chNo", vendGoods.getHeatChno());	
+		}else{
+			orderGoods.accumulate("chNo", vendGoods.getColdChno());	
+		}
+		orderGoods.accumulate("count", vendOrder.getNum());
+		//商品参数详情
+		JSONObject params = new JSONObject();
+		params.accumulate("selfCup", 0);
+		orderGoods.accumulate("params", params);
+		
+		payload.accumulate("orderGoods", orderGoods);
+		Map<String,Object> dataMap = new HashMap<String,Object>();
+		dataMap.put("id", vendMachine.getMachineId());
+		dataMap.put("payload", payload);
+		try {
+			String retMsg = HttpClientUtil.httpPostRequest(SysPara.midPublishUrl,dataMap);
+			logger.info("------------------retMsg的值---------------"+retMsg);
+			if(StringUtils.isNotBlank(retMsg)){
+				JSONObject retJson = JSONObject.fromObject(retMsg);	
+				logger.info("------------------retJson的值---------------"+retJson);
+				String retCode = retJson.getString("result");
+				logger.info("------------------retCode的值---------------"+retCode);
+				if(retCode.equals("0")){
+					System.out.println("售卖成功:" + retJson.getString("msg"));
+					logger.info("------------------售卖成功---------------"+retJson.getString("msg"));
+				}else{
+					System.out.println("售卖失败:" + retJson.getString("msg"));
+					logger.info("------------------售卖失败---------------"+retJson.getString("msg"));
+				}
+			}
+	    }catch (UnsupportedEncodingException e) {
+		// TODO Auto-generated catch block
+		    e.printStackTrace();
+	    }
 	}
 }

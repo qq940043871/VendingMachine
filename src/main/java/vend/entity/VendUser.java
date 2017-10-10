@@ -43,6 +43,8 @@ public class VendUser {
 
     private String extend6;
 
+    private Integer attendNum;
+
     public String getUsercode() {
         return usercode;
     }
@@ -83,7 +85,7 @@ public class VendUser {
         this.roleId = roleId;
     }
     @NotEmpty(message="手机号不能为空")
-    @Pattern(regexp="^((13[0-9])|(14[5|7])|(15([0-3]|[5-9]))|(18[0,5-9]))\\d{8}$",message="手机号格式错误")
+    @Pattern(regexp="^((13[0-9])|(14[0-9])|(17[0-9])|(15([0-3]|[5-9]))|(18[0,5-9]))\\d{8}$",message="手机号格式错误")
     public String getMobile() {
         return mobile;
     }
@@ -186,5 +188,13 @@ public class VendUser {
 
     public void setExtend6(String extend6) {
         this.extend6 = extend6 == null ? null : extend6.trim();
+    }
+
+    public Integer getAttendNum() {
+        return attendNum;
+    }
+
+    public void setAttendNum(Integer attendNum) {
+        this.attendNum = attendNum;
     }
 }

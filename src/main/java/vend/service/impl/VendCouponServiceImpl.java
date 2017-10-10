@@ -24,16 +24,16 @@ public class VendCouponServiceImpl implements VendCouponService {
 	 * @return
 	 */
 	public List<VendCoupon> listVendCoupon(VendCoupon vendCoupon,Page page){
+		int totalNumber = vendCouponMapper.countVendCoupon(vendCoupon);
+		page.setTotalNumber(totalNumber);
 		String title=vendCoupon.getCouponName();
 		String currentPage=Integer.toString(page.getCurrentPage());
 		if(title==null){
 			title="";
 		}
-		String key="key_listVendCoupon"+title+currentPage;
+		String key="key_listVendCoupon"+title+currentPage+vendCoupon.getExtend1();
 		List<VendCoupon> vendCoupons=(List<VendCoupon>)CacheUtils.get("couponCache", key);
 		if(vendCoupons==null){
-			int totalNumber = vendCouponMapper.countVendCoupon(vendCoupon);
-			page.setTotalNumber(totalNumber);
 			vendCoupons=vendCouponMapper.listVendCoupon(vendCoupon, page);
 			CacheUtils.put("couponCache",key, vendCoupons);
 		}
@@ -100,6 +100,20 @@ public class VendCouponServiceImpl implements VendCouponService {
 			CacheUtils.put("couponCache", key, vendCoupon);
 		}
 		return vendCoupon;
+	}
+	/**
+	 * 查找优惠活动
+	 * @param currentDate
+	 * @return
+	 */
+	public List<VendCoupon> selectRecharge(){
+		String key="key_selectRecharge";
+		List<VendCoupon> vendCoupons=(List<VendCoupon>)CacheUtils.get("couponCache", key);
+		if(vendCoupons==null){
+			vendCoupons= vendCouponMapper.selectRecharge();
+			CacheUtils.put("couponCache", key, vendCoupons);
+		}
+		return vendCoupons;
 	}
 
 	public List<VendCoupon> findAll() {

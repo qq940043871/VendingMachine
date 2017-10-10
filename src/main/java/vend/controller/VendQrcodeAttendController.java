@@ -1,11 +1,14 @@
 package vend.controller;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +27,10 @@ import base.util.Function;
 import base.util.Page;
 import vend.entity.VendQrcodeAttend;
 import vend.entity.VendShopQrcode;
+import vend.entity.VendUser;
 import vend.service.VendQrcodeAttendService;
 import vend.service.VendShopQrcodeService;
+import vend.service.VendUserService;
 
 @Controller
 @RequestMapping("/qrcodeAtt")
@@ -36,6 +41,8 @@ public class VendQrcodeAttendController{
 	VendQrcodeAttendService vendQrcodeAttendService;
 	@Autowired
 	VendShopQrcodeService vendShopQrcodeService;
+	@Autowired
+	VendUserService vendUserService;
 	/**
 	 * 根据输入信息条件查询二维码关注列表，并分页显示
 	 * @param model
@@ -55,10 +62,24 @@ public class VendQrcodeAttendController{
 		}
 		logger.info(page.toString());
 		logger.info(vendQrcodeAttend.toString());
+		HttpSession session=request.getSession();
+    	VendUser user=(VendUser)session.getAttribute("vendUser");
+    	String userlist="";
+		if(user!=null&&user.getUsercode()!=null){//上级账号
+			userlist=vendUserService.getNextUsersOwnSelf(user.getUsercode());
+		}
 		List<VendShopQrcode> vendShopQrcodes=vendShopQrcodeService.findAll();
 		model.addAttribute("vendShopQrcodes",vendShopQrcodes);
 		List<VendQrcodeAttend> vendQrcodeAttends = vendQrcodeAttendService.listVendQrcodeAttend(vendQrcodeAttend, page);
-		model.addAttribute("vendQrcodeAttends",vendQrcodeAttends);
+		List<VendQrcodeAttend> list=new ArrayList<VendQrcodeAttend>();
+		for(VendQrcodeAttend vendQrcodeAttend1:vendQrcodeAttends){
+			if(StringUtils.indexOf(userlist, vendQrcodeAttend1.getExtend1())!=-1){
+				vendQrcodeAttend1.setUsercode(vendUserService.getOne(vendQrcodeAttend1.getUsercode()).getUsername());
+				vendQrcodeAttend1.setExtend1(vendUserService.getOne(vendQrcodeAttend1.getExtend1()).getUsername());
+			    list.add(vendQrcodeAttend1); 
+			}
+		}
+		model.addAttribute("vendQrcodeAttends",list);
 		return "manage/qrcodeAtt/qrcodeAtt_list";
 	}
 	/**
@@ -147,28 +168,4 @@ public class VendQrcodeAttendController{
     	vendQrcodeAttendService.delVendQrcodeAttends(idArray1);
   		return "redirect:/qrcodeAtt/qrcodeAtts";
   	}
-	/**
-	 * 用户关注商家二维码后发送的请求
-	 * @param map
-	 * @throws IOException
-	 */
-	@RequestMapping(value="/jusecoupons",method=RequestMethod.POST,produces = "application/json;charset=UTF-8")
-	public @ResponseBody void getuseJson(Map<String,String> map) throws IOException {
-		Date attendTime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());
-		String usercode=map.get("usercode");
-		int qrcodeId=Function.getInt(map.get("qrcodeId"),0);
-		
-		VendQrcodeAttend vendQrcodeAttend =new VendQrcodeAttend();
-		vendQrcodeAttend.setUsercode(usercode);
-		vendQrcodeAttend.setQrcodeId(qrcodeId);
-		vendQrcodeAttend.setAttendTime(attendTime);
-		vendQrcodeAttendService.insertVendQrcodeAttend(vendQrcodeAttend);
-		
-		VendShopQrcode vendShopQrcode=vendShopQrcodeService.getOne(qrcodeId);
-		if(vendShopQrcode!=null){
-			vendShopQrcode.setAttenNum(vendShopQrcode.getAttenNum()+1);
-			vendShopQrcodeService.editVendShopQrcode(vendShopQrcode);
-		}
-		
-	}
 }

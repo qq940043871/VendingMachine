@@ -105,7 +105,8 @@
 	                    </c:choose></td>
 	                </tr>
 	                <tr>
-	                  <td colspan=2><button class="btn btn-danger btn-mini">实时查询杯数</button></td>
+	                  <td><a onclick="javascript:getDevList('${vendMachine.id}');" class="btn btn-danger btn-mini">实时查询杯数</a></td>
+	                  <td><a onclick="javascript:getDevParam('${vendMachine.id}');" class="btn btn-danger btn-mini">查询设备参数</a></td>
 	                </tr>
 	                 <tr>
 	                  <td colspan=2><a href="<%=basePath1%>machine/machines" class="btn btn-success">立即返回</a></td>
@@ -115,7 +116,7 @@
 			  </div>
 		  </div>
 		</div>
-		<div class="span4">
+		<!--  <div class="span4">
 		  <div class="widget-box">
 		      <div class="widget-title"> <span class="icon"><i class="icon-eye-open"></i></span>
                  <h5>咖啡机状态</h5>
@@ -134,7 +135,7 @@
 		         <tbody>
 	                <tr>
 	                  <td>固定二维码</td>
-	                  <td>
+	                  <td style="width:120px;">
 	                    <sf:select path="clientQrcode" items="${clientQrcodes}" itemLabel="extend1" itemValue="id">
 	                    </sf:select>
 	                  </td>
@@ -146,7 +147,7 @@
 			     </table>
 			  </sf:form>
 			  </div>
-		  </div>
+		  </div>-->
 		</div>
     </div>
   </div>
@@ -159,5 +160,6 @@
 
 <!--end-Footer-part-->
 <%@ include file="../../common/common_js.jsp" %>
+<script src="<%=basePath2 %>resources/js/back/machine_list.js"></script>
 </body>
 </html>

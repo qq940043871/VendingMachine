@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
+<%@page import="base.util.DateUtil" %>
 <head>
 <title>自动售货机管理系统</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -43,9 +44,15 @@
 			      <table style="margin-bottom:5px;">
 			            <tr>
 			              <th>用户名:</th>
-			              <th><input type="text" name="usercode" id="usercode" placeholder="按用户名搜索"/>&nbsp;&nbsp;</th>
+			              <th><input type="text" value="${usercode }" name="usercode" id="usercode" placeholder="按用户名搜索"/>&nbsp;&nbsp;</th>
 			              <th>商家名:</th>
-			              <th><input type="text" name="shopusercode" id="shopusercode" placeholder="按商家名搜索"/>&nbsp;&nbsp;</th>
+			              <th><input type="text" value="${shopusercode }" name="shopusercode" id="shopusercode" placeholder="按商家名搜索"/>&nbsp;&nbsp;</th>
+		                  <td>
+		                  从<input type="text" value="${beginTime }" class="Wdate span2" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" name="beginTime" id="beginTime"  placeholder="开始时间"/>
+		                  </td>
+		                  <td>
+		                  到<input type="text" value="${endTime }" class="Wdate span2" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" name="endTime" id="endTime"  placeholder="结束时间"/>
+		                  </td>
 		                  <th><input type="submit" value="搜索" class="btn btn-info"/>&nbsp;&nbsp;</th>
 		                  <!--<td><a href="add" class="btn btn-success"/>添加</a>&nbsp;&nbsp;</td>  -->
 		                  <shiro:hasPermission name="order:add">
@@ -97,7 +104,7 @@
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                 <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>
@@ -118,6 +125,7 @@
 
 <!--end-Footer-part-->
 <%@ include file="../../common/common_js.jsp" %>
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/DatePicker/WdatePicker.js"></script>
 <script type="text/javascript">
 function delconfirm(orderId){
 	 if(confirm("确定要删除吗?")){

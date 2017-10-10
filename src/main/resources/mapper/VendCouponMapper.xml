@@ -238,7 +238,10 @@
 	from vend_coupon
 	<where>
 		<if test="vendCoupon.couponName != null and !&quot;&quot;.equals(vendCoupon.couponName.trim())">
-			and coupon_name = #{VendCoupon.couponName}
+			and coupon_name = #{vendCoupon.couponName}
+		</if>
+		<if test="vendCoupon.extend1 != null and !&quot;&quot;.equals(vendCoupon.extend1.trim())">
+			and extend1 = #{vendCoupon.extend1}
 		</if>
 	</where>order by id limit #{page.dbIndex},#{page.dbNumber}
   </select>
@@ -249,11 +252,20 @@
  		<if test="couponName != null and !&quot;&quot;.equals(couponName.trim())">
 		and coupon_name = #{couponName}
 	</if>
+	<if test="extend1 != null and !&quot;&quot;.equals(extend1.trim())">
+			and extend1 = #{extend1}
+		</if>
  	</where>
   </select>
   
+  <select id="selectRecharge" resultMap="BaseResultMap" parameterType="java.lang.String">
+	select
+	<include refid="Base_Column_List" />
+	from vend_coupon where extend1=3
+  </select>
+  
    <select id="findAll" resultMap="BaseResultMap">
- 	select * from vend_coupon
+ 	select * from vend_coupon where valid=1 and extend1 !=3
   </select>
   <!-- 批量删除 -->
     <delete id="deleteBatch" parameterType="int">

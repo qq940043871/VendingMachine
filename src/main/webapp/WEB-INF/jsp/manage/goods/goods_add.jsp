@@ -56,6 +56,7 @@
 	                   <span class="infopic" style="color:#b94a48;"></span>
 	                  <sf:hidden path="pic" class="filepath"/>
 	                  <span for="required" generated="true" class="help-inline"> <sf:errors path="pic" cssClass="errors"  style="color:#b94a48;"></sf:errors></span>
+	                  <span><img src="" class="imgpic"/></span>
 	                </div>
 	              </div>
 	              
@@ -67,7 +68,24 @@
 	                  </div>
 	                 <span for="required" generated="true" class="help-inline"> <sf:errors path="price" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
 	                </div>
+	               </div>
+	                
+	               <div class="control-group">
+	                <label class="control-label">热饮通道号</label>
+	                <div class="controls">
+	                 <sf:input path="heatChno"/>
+	                 <span for="required" generated="true" class="help-inline"> <sf:errors path="heatChno" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
+	                </div>
+	               </div>
+	                
+	              <div class="control-group">
+	                <label class="control-label">冷饮通道号</label>
+	                <div class="controls">
+	                  <sf:input path="coldChno"/>
+	                 <span for="required" generated="true" class="help-inline"> <sf:errors path="coldChno" cssClass="errors" style="color:#b94a48;"></sf:errors></span>
+	                </div>
 	              </div>
+	              
 	              <div class="control-group">
 	                <label class="control-label">描述</label>
 	                <div class="controls">

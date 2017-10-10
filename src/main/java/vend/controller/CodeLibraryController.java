@@ -61,6 +61,18 @@ public class CodeLibraryController {
 		return "manage/codelibrary/codelibrary_areaset";
 	}
 	/**
+	 * 微信商户信息
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value="/weixinset")
+	public String weixinSet(Model model){
+		List<CodeLibrary> wechatpubnos=codeLibraryService.selectByCodeNo("WECHATPUBNO");
+		model.addAttribute("codeno", "WECHATPUBNO");
+		model.addAttribute("wechatpubnos", wechatpubnos);
+		return "manage/codelibrary/codelibrary_weixinset";
+	}
+	/**
 	 * 跳转参数类别信息添加界面
 	 * @param model
 	 * @return
@@ -83,7 +95,12 @@ public class CodeLibraryController {
 	@RequiresPermissions({"codeLibrary:add"})
     @RequestMapping(value="/add",method=RequestMethod.POST)
 	public String addcodeLibrary(HttpServletRequest request,Model model,@Validated CodeLibrary codeLibrary,BindingResult br){
-    	if(br.hasErrors()){
+    	if(codeLibrary.getCodeno().equals("ADSCREEN")){
+    		if(codeLibrary.getExtend2()==null||codeLibrary.getExtend2().equals("")){
+    			br.rejectValue("extend2", "NOTEMPTY", "广告屏页web面地址不能为空");
+    		}
+    	}
+		if(br.hasErrors()){
     		return "manage/codelibrary/codelibrary_add";
     	}
     	String path = request.getContextPath();
@@ -93,7 +110,19 @@ public class CodeLibraryController {
     	Date addtime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());//创建时间
     	codeLibrary.setAddtime(addtime);
     	codeLibraryService.insertCodeLibrary(codeLibrary);
-    	return "redirect:"+basePath+"/codeCatalog/"+codeLibrary.getCodeno()+"/codelibrarylist";
+    	
+    	String returnStr="redirect:"+basePath+"/codeCatalog/"+codeLibrary.getCodeno()+"/codelibrarylist";
+    	if(codeLibrary.getCodeno().equals("WECHATPUBNO")){
+    		returnStr="redirect:weixinset";
+    	}
+    	if(codeLibrary.getCodeno().equals("COUPONAREA")){
+    		returnStr="redirect:areaset";
+    	}
+    	if(codeLibrary.getCodeno().equals("ADSCREEN")){
+    		returnStr="redirect:adscreen";
+    	}
+    	
+    	return returnStr;
 	}
     /**
      * 跳转到批量添加参数类别页面
@@ -112,6 +141,7 @@ public class CodeLibraryController {
 	@RequestMapping(value="/{id}/edit",method=RequestMethod.GET)
 	public String editCodeLibrary(Model model,@PathVariable String id){
 		CodeLibrary codeLibrary=codeLibraryService.getCodeLibraryByID(id);
+		model.addAttribute("codeno", codeLibrary.getCodeno());
 		model.addAttribute(codeLibrary);
 		return "manage/codelibrary/codelibrary_edit";
 	}
@@ -125,11 +155,28 @@ public class CodeLibraryController {
     @RequiresPermissions({"codeLibrary:edit"})
     @RequestMapping(value="/edit",method=RequestMethod.POST)
 	public String editCodeLibrary(Model model,@Validated CodeLibrary codeLibrary,BindingResult br){
+    	if(codeLibrary.getCodeno().equals("ADSCREEN")){
+    		if(codeLibrary.getExtend2()==null||codeLibrary.getExtend2().equals("")){
+    			br.rejectValue("extend2", "NOTEMPTY", "广告屏页web面地址不能为空");
+    		}
+    	}
     	if(br.hasErrors()){
     		return "manage/codelibrary/codelibrary_edit";
     	}
     	codeLibraryService.editCodeLibrary(codeLibrary);
-		return "redirect:/codeCatalog/"+codeLibrary.getCodeno()+"/codelibrarylist";
+    	
+    	String returnStr="redirect:/codeCatalog/"+codeLibrary.getCodeno()+"/codelibrarylist";
+    	if(codeLibrary.getCodeno().equals("WECHATPUBNO")){
+    		returnStr="redirect:weixinset";
+    	}
+    	if(codeLibrary.getCodeno().equals("COUPONAREA")){
+    		returnStr="redirect:areaset";
+    	}
+    	if(codeLibrary.getCodeno().equals("ADSCREEN")){
+    		returnStr="redirect:adscreen";
+    	}
+    	
+    	return returnStr; 
 	}
     /**
      * 删除参数类别信息
@@ -140,8 +187,21 @@ public class CodeLibraryController {
     @RequiresPermissions({"codeLibrary:del"})
     @RequestMapping(value="/{codeno}/{id}/del")
  	public String delcodeLibrary(@PathVariable String id,@PathVariable String codeno){
-    	 codeLibraryService.deleteCodeLibrary(id);
- 		return "redirect:/codeCatalog/"+codeno+"/codelibrarylist";
+    	
+    	codeLibraryService.deleteCodeLibrary(id);
+    	 
+ 		String returnStr="redirect:/codeCatalog/"+codeno+"/codelibrarylist";
+    	if(codeno.equals("WECHATPUBNO")){
+    		returnStr="redirect:weixinset";
+    	}
+    	if(codeno.equals("COUPONAREA")){
+    		returnStr="redirect:areaset";
+    	}
+    	if(codeno.equals("ADSCREEN")){
+    		returnStr="redirect:adscreen";
+    	}
+    	
+    	return returnStr; 
  	}
      /**
       * 批量删除参数类别信息

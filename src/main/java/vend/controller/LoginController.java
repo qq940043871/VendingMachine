@@ -145,7 +145,13 @@ public class LoginController extends LogoutFilter{
 	public String login(Model model, HttpServletRequest request) throws Exception{
 		Subject subject=SecurityUtils.getSubject();
 		String username = request.getParameter("userName");
-		String password =Function.getEncrypt(request.getParameter("password"));
+		String wjmpassword=request.getParameter("password");
+		if(wjmpassword==null){
+			wjmpassword="000000";
+		}
+		logger.info("---------------未加密的密码wjmpassword----------------------"+wjmpassword);
+		String password =Function.getEncrypt(wjmpassword);
+		logger.info("---------------加密的密码password----------------------"+password);
 		String verificode=request.getParameter("verificode");//验证码
 		HttpSession session=request.getSession();
 		String maskcode=(String)session.getAttribute(Const.SESSION_SECURITY_CODE);
@@ -230,7 +236,9 @@ public class LoginController extends LogoutFilter{
     @RequestMapping(value="/wxreg",method=RequestMethod.POST,produces = "application/json;charset=UTF-8")
     public @ResponseBody Map<String, String> wxreg(@RequestBody Map<String, String> map){
     	String username=map.get("nickname");
-    	VendUser user=vendUserService.selectByUsername(username);
+    	logger.info("username是"+username);
+    	VendUser user=vendUserService.selectByUsernameXF(username);
+    	logger.info("user");
     	Date createtime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());//创建时间
     	if(user==null){
     		user=new VendUser();
@@ -240,8 +248,6 @@ public class LoginController extends LogoutFilter{
     		user.setAddress(map.get("address"));
     		user.setMobile(map.get("mobile"));
     		user.setRoleId(5);
-    		user.setCreateTime(createtime);
-    		user.setUpdateTime(createtime);
     		int isOk=vendUserService.insertVendUser(user);
     		if(isOk==1){
     			map.put("success", "1");
@@ -264,6 +270,8 @@ public class LoginController extends LogoutFilter{
      */
     @RequestMapping(value="/wxlogin",method=RequestMethod.POST,produces = "application/json;charset=UTF-8")
     public @ResponseBody Map<String, Object> wxlogin(HttpServletRequest request,@RequestBody Map<String, String> map){
+    	logger.info("小程序开始登陆");
+    	logger.info("小程序map"+map);
     	Map<String, Object> resultMap=new HashMap<String, Object>();
     	//存储状态信息
     	resultMap.put("avatarUrl", map.get("avatarUrl"));
@@ -271,16 +279,22 @@ public class LoginController extends LogoutFilter{
     	resultMap.put("usercode", "");
     	resultMap.put("success", "0");
     	resultMap.put("msg", "登录错误");
-    	
+    	logger.info("小程序resultMap"+resultMap);
     	String username=map.get("nickName");
-    	VendUser venduser=vendUserService.selectByUsername(username);
+    	logger.info("小程序username"+username);
+    	VendUser venduser=vendUserService.selectByUsernameXF(username);
+    	logger.info("小程序venduser"+venduser);
     	if(venduser==null){
+    		logger.info("小程序venduser是null");
     		resultMap.put("usercode", "");
     		resultMap.put("success", "0");
     		resultMap.put("msg", "您还没注册,请先进行注册");
     	}else{
-    		List<UserCoupon> userCoupons=userCouponService.findByUsercode(venduser.getUsercode());
+    		logger.info("小程序venduser不是null");
+    		List<UserCoupon> userCoupons=userCouponService.findByUsercode(venduser.getUsercode(),DateUtil.getCurrentDateStr());
+    		logger.info("小程序userCoupons"+userCoupons);
     		VendAccount vendAccount = vendAccountService.getOne(venduser.getUsercode());
+    		logger.info("小程序vendAccount"+vendAccount);
     		//List<CodeLibrary> ordertypes =codeLibraryService.selectByCodeNo("ORDERTYPE");
     		resultMap.put("vendAccount", vendAccount);
     		resultMap.put("userCoupons", userCoupons);
@@ -289,6 +303,7 @@ public class LoginController extends LogoutFilter{
     		resultMap.put("msg", "登录成功");
     		
     		VendSyslog vendSyslog=new VendSyslog();
+    		logger.info("小程序vendSyslog"+vendSyslog);
     		vendSyslog.setUsercode(venduser.getUsercode());
     		vendSyslog.setUsername(username);
     		vendSyslog.setOperIp(request.getRemoteAddr());
@@ -301,6 +316,7 @@ public class LoginController extends LogoutFilter{
     		}
     		vendSyslog.setOperDescription("登录成功");
     		vendSyslogService.insertVendSyslog(vendSyslog);
+    		logger.info("小程序vendSyslog登录成功");
     	}
     	return resultMap;
     }

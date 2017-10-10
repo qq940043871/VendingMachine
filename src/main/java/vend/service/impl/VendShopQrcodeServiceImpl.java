@@ -61,6 +61,22 @@ public class VendShopQrcodeServiceImpl implements VendShopQrcodeService {
 		return vendShopQrcodeMapper.findAll();
 	}
 	/**
+	 * 按用户名查找
+	 * @param usercode
+	 * @return
+	 */
+	public List<VendShopQrcode> selectByUsercode(String usercode){
+		return vendShopQrcodeMapper.selectByUsercode(usercode);
+	}
+	/**
+	 * 按机器ID查找
+	 * @param usercode
+	 * @return
+	 */
+	public VendShopQrcode selectByMachineId(String machineId){
+		return vendShopQrcodeMapper.selectByMachineId(machineId);
+	}
+	/**
 	 * 按照类型查找
 	 * @param extend2
 	 * @return

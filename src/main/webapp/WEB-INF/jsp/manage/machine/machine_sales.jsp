@@ -45,10 +45,10 @@
 		                  <th>机器码:</th>
 			              <th><input type="text" name="machineCode" id="machineCode" placeholder="按机器销售统计名搜索"/>&nbsp;&nbsp;</th>
 		                  <th>
-		                  <input type="text" name="beginTime" id="beginTime" value="<%=DateUtil.getCurrentDateStr()%>" placeholder="开始时间" class="span2"/>
+		                  <input type="text" name="beginTime" id="beginTime" class="Wdate span2" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" value="<%=DateUtil.getCurrentDateStr()%>" placeholder="开始时间"/>
 		                  </th>
 		                  <th>
-		                  <input type="text" name="endTime" id="endTime" value="<%=DateUtil.format(DateUtil.addDays(DateUtil.parseDate(DateUtil.getCurrentDateStr()),1))%>" placeholder="结束时间" class="span2"/>
+		                  <input type="text" name="endTime" id="endTime" class="Wdate span2" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" value="<%=DateUtil.format(DateUtil.addDays(DateUtil.parseDate(DateUtil.getCurrentDateStr()),1))%>" placeholder="结束时间"/>
 		                  </th>
 		                  <th><input type="submit" value="搜索" class="btn btn-info"/>&nbsp;&nbsp;</th>
 		                </tr>
@@ -70,10 +70,10 @@
 				           <tr class="gradeX">
 					          <th><input type="checkbox" name="Id" id="Id" value="${vendMachine.id}"/></th>
 			                  <td>${vendMachine.machinecode}</td>
-			                  <td><a class="btn-info btn-mini" style="border-radius:32px;">${vendMachine.user_num}</a></td>
-			                  <td><a class="btn-info btn-mini" style="border-radius:32px;">${vendMachine.sell_num}</a></td>
+			                  <td><a class="badge badge-info">${vendMachine.user_num}</a></td>
+			                  <td><a class="badge badge-info">${vendMachine.sell_num}</a></td>
 			                  <td><a style="color:red;font-weight:600;">${vendMachine.sell_amount}</a></td>
-			                  <td><a class="btn-info btn-mini" style="border-radius:32px;">${vendMachine.free_num}</a></td>
+			                  <td><a class="badge badge-info">${vendMachine.free_num}</a></td>
 			                </tr>
 			           </c:forEach>
 			         </tbody>
@@ -85,7 +85,7 @@
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                 <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>
@@ -112,13 +112,8 @@ function delconfirm(id){
 		window.location.href=basePath+"machine/"+id+"/del";
 	 }
 }
-$('#beginTime').datetimepicker({
-    format: 'yyyy-mm-dd'
-});
-$('#endTime').datetimepicker({
-    format: 'yyyy-mm-dd'
-})
 </script>
 <script src="<%=basePath2 %>resources/js/back/machine_list.js"></script>
+<script type="text/javascript" src="${pageContext.request.contextPath}/resources/DatePicker/WdatePicker.js"></script>
 </body>
 </html>

@@ -62,6 +62,7 @@
 		                  <th>广告名</th>
 		                  <th>广告开始时间</th>
 		                  <th>广告结束时间</th>
+		                  <th>是否有效</th>
 		                  <th>操作</th>
 		                </tr>
 			         </thead>
@@ -73,12 +74,33 @@
 			                  <td>${vendAd.adName}</td>
 			                  <td><fmt:formatDate value="${vendAd.startTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
 			                  <td><fmt:formatDate value="${vendAd.endTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
+			                  <td><c:choose>
+			                     <c:when test="${vendAd.extend3==1}">
+			                       <button class="btn btn-success btn-mini">有效</button>
+			                     </c:when>
+			                     <c:otherwise>
+			                       <button class="btn btn-danger btn-mini">无效</button>
+			                     </c:otherwise>
+			                    </c:choose>
+			                    </td>
 			                  <td class="center">
 			                    <shiro:hasPermission name="ad:edit">
-			                     <a href="${vendAd.id}/edit" class="btn btn-success icon-edit"/></a>&nbsp;&nbsp;
+			                     <a href="${vendAd.id}/edit" class="btn btn-success"/>修改</a>&nbsp;&nbsp;
 			                    </shiro:hasPermission>
 			                    <shiro:hasPermission name="ad:del">
-			                     <a href="javascript:void(0);" onclick="delconfirm(${vendAd.id});" class="btn btn-danger  icon-trash"/></a>
+			                     <a href="javascript:void(0);" onclick="delconfirm(${vendAd.id});" class="btn btn-danger"/>删除</a>
+			                    </shiro:hasPermission>
+			                    <shiro:hasPermission name="adputon">
+			                    <c:choose>
+			                       <c:when test="${vendAd.extend3==0}">
+			                          &nbsp;&nbsp;<a href="javascript:void(0);" onclick="tfconfirm(${vendAd.id});" class="btn btn-success"/>整体投放</a>
+			                       </c:when>
+			                     </c:choose>
+			                     <c:choose>
+			                       <c:when test="${vendAd.extend3==1}">
+			                       &nbsp;&nbsp; <a href="javascript:void(0);" onclick="shconfirm(${vendAd.id});" class="btn btn-success"/>回收</a>
+			                       </c:when>
+			                     </c:choose>
 			                    </shiro:hasPermission>
 			                  </td>
 			                </tr>
@@ -92,7 +114,7 @@
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>
@@ -117,6 +139,38 @@
 function delconfirm(id){
 	 if(confirm("确定要删除吗?")){
 		window.location.href=basePath+"ad/"+id+"/del";
+	 }
+}
+function tfconfirm(id){
+	 if(confirm("确定要投放吗?")){
+		var url=basePath+"manage/"+id+"/setShAdItemList";
+		 $.post(url,'',function(res){
+			var data=eval("("+res+")");
+			var success=data.success;
+			var msg=data.msg;
+			if(success==0){
+				alert(msg);
+			}else if(success==1){
+				alert(msg);
+				window.location.reload();
+			}
+		 })
+	 }
+}
+function shconfirm(id){
+	 if(confirm("确定要收回吗?")){
+		var url=basePath+"ad/"+id+"/shad";
+		 $.post(url,'',function(res){
+			var data=eval("("+res+")");
+			var success=data.success;
+			var msg=data.msg;
+			if(success==0){
+				alert(msg);
+			}else if(success==1){
+				alert(msg);
+				window.location.reload();
+			}
+		 })
 	 }
 }
 </script>

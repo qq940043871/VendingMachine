@@ -9,14 +9,22 @@ import org.springframework.stereotype.Service;
 import base.util.CacheUtils;
 import base.util.DateUtil;
 import base.util.Page;
+import vend.dao.VendAdMapper;
 import vend.dao.VendMachineMapper;
+import vend.dao.VendShopQrcodeMapper;
+import vend.entity.VendAd;
 import vend.entity.VendMachine;
+import vend.entity.VendShopQrcode;
 import vend.service.VendMachineService;
 
 @Service
 public class VendMachineServiceImpl implements VendMachineService {
 	@Autowired
 	VendMachineMapper vendMachineMapper;
+	@Autowired
+	VendAdMapper vendAdMapper;
+	@Autowired
+	VendShopQrcodeMapper vendShopQrcodeMapper;
 	/**
 	 * 根据输入信息条件查询机器列表，并分页显示
 	 * @param vendMachine
@@ -27,7 +35,7 @@ public class VendMachineServiceImpl implements VendMachineService {
 		int totalNumber = vendMachineMapper.countVendMachine(vendMachine);
 		page.setTotalNumber(totalNumber);
 		
-		String title=vendMachine.getUsercode();
+		String title=vendMachine.getUsercode()+vendMachine.getMachineCode()+vendMachine.getMachineName();
 		String currentPage=Integer.toString(page.getCurrentPage());
 		if(title==null){
 			title="";
@@ -54,6 +62,36 @@ public class VendMachineServiceImpl implements VendMachineService {
 		vendMachine.setUseStatus("0");
 		vendMachine.setWaterStatus("0");
 		int isOk=vendMachineMapper.insertSelective(vendMachine);
+		
+		//添加该机器广告
+		if(vendMachine.getMachineId()!=null){
+			VendAd vendAd=vendAdMapper.selectByMachineId(vendMachine.getMachineId());
+			if(vendAd==null){
+				vendAd=new VendAd();
+				vendAd.setMachineId(vendMachine.getMachineId());
+				vendAd.setType("5");//机器广告
+				vendAd.setUsercode(vendMachine.getUsercode());
+				vendAd.setExtend3("0");//是否有效
+				vendAd.setIsmachineuse("0");//是否单独投放改机器,0否，1是
+				vendAd.setCreateTime(createTime);
+				vendAd.setUpdateTime(createTime);
+				vendAdMapper.insert(vendAd);
+			}
+		}
+		//添加该机器二维码信息
+		if(vendMachine.getMachineId()!=null){
+			VendShopQrcode vendShopQrcode=vendShopQrcodeMapper.selectByMachineId(vendMachine.getMachineId());
+			if(vendShopQrcode==null){
+				vendShopQrcode=new VendShopQrcode();
+				vendShopQrcode.setMachineId(vendMachine.getMachineId());
+				vendShopQrcode.setExtend4("5");//机器单独设置的二维码级别
+				vendShopQrcode.setUsercode(vendMachine.getUsercode());
+				vendShopQrcode.setExtend1(vendMachine.getMachineId());
+				vendShopQrcode.setExtend2("1");
+				vendShopQrcode.setCreateTime(createTime);
+				vendShopQrcodeMapper.insert(vendShopQrcode);
+			}
+		}
 		if(isOk==1){
 			CacheUtils.clear();
 		}

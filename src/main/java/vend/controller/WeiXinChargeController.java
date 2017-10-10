@@ -24,9 +24,11 @@ import base.weixinpay.model.OrderReturnInfo;
 import base.weixinpay.model.SignInfo;
 import vend.entity.VendAccount;
 import vend.entity.VendAccountDetail;
+import vend.entity.VendCoupon;
 import vend.entity.VendOrder;
 import vend.service.VendAccountDetailService;
 import vend.service.VendAccountService;
+import vend.service.VendCouponService;
 import vend.service.VendMachineService;
 import vend.service.VendOrderService;
 import vend.service.VendParaService;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,14 +61,17 @@ public class WeiXinChargeController {
 	@Autowired
 	VendAccountService vendAccountService;
 	@Autowired
+	VendCouponService vendCouponService;
+	@Autowired
 	VendAccountDetailService vendAccountDetailService;
 	/**
-	 * 得到本次支付的openid
+	 * 得到本次充值的openid
 	 * @param map
 	 * @return
 	 */
 	@RequestMapping(value="/getsessionkey",method=RequestMethod.POST,produces = "application/json;charset=UTF-8")
 	public @ResponseBody Map<String, String> getSessionKey(@RequestBody Map<String, String> map){
+		logger.info("----------------------进入getsessionkey------------------------");
 		Configure.setAppID(vendParaService.selectByParaCode("appid"));
 		Configure.setMch_id(vendParaService.selectByParaCode("mch_id"));
 		Configure.setKey(vendParaService.selectByParaCode("key"));
@@ -74,8 +80,10 @@ public class WeiXinChargeController {
 				+ "appid="+Configure.getAppID()+"&secret="+Configure.getSecret()+""
 				+ "&js_code="+map.get("code")+""
 				+ "&grant_type=authorization_code";
+		logger.info("----------------------getsessionkey方法uri------------------------"+uri);
 		String json=HttpClientUtil.httpPostRequest(uri);
 		Map<String, Object> resultMap=JsonUtil.getMap4Json(json);
+		logger.info("----------------------getsessionkey方法resultMap------------------------"+resultMap);
 		Map<String, String> returnMap=new HashMap<String, String>();
 		returnMap.put("session_key", (String)resultMap.get("session_key"));
 		returnMap.put("expires_in", resultMap.get("expires_in").toString());
@@ -91,6 +99,7 @@ public class WeiXinChargeController {
 	public @ResponseBody void getOrder(HttpServletRequest request,HttpServletResponse response){
 		String openid=request.getParameter("openid");
 		String usercode=request.getParameter("usercode");
+		String hdid=request.getParameter("hdid");
 		double chargeamount=Function.getDouble(request.getParameter("chargeamount"), 0.00);
 		
 		VendOrder vendOrder=new VendOrder();
@@ -99,6 +108,9 @@ public class WeiXinChargeController {
 		String orderId=Function.getOrderId();
 		vendOrder.setOrderId(orderId);
 		vendOrder.setUsercode(usercode);
+		if(hdid!=null&&!"".equals(hdid)){
+			vendOrder.setExtend4(hdid);
+		}
 		vendOrder.setShopusercode("");
 		vendOrder.setGoodsId(0);
 		vendOrder.setMachineCode("");
@@ -112,7 +124,7 @@ public class WeiXinChargeController {
 		int fee=(int)(chargeamount*100);
 		try {
 			OrderInfo order = new OrderInfo();
-			//设置微信支付的参数
+			//设置微信充值的参数
 			Configure.setAppID(vendParaService.selectByParaCode("appid"));
 			Configure.setMch_id(vendParaService.selectByParaCode("mch_id"));
 			Configure.setKey(vendParaService.selectByParaCode("key"));
@@ -124,8 +136,8 @@ public class WeiXinChargeController {
 			order.setBody("微信充值");
 			order.setOut_trade_no(orderId);
 			order.setTotal_fee(fee);
-			order.setSpbill_create_ip("1.192.121.236");
-			order.setNotify_url("http://www.vm.com/VendingMachine/wxcharge/payresult");
+			order.setSpbill_create_ip("47.93.149.91");
+			order.setNotify_url("https://zdypx.benbenniaokeji.com/wxcharge/payresult");
 			order.setTrade_type("JSAPI");
 			order.setOpenid(openid);
 			order.setSign_type("MD5");
@@ -151,7 +163,7 @@ public class WeiXinChargeController {
 		}
 	}
 	/**
-	 * 微信小程序支付获取签名
+	 * 微信小程序充值获取签名
 	 * @param map
 	 * @return
 	 */
@@ -184,30 +196,19 @@ public class WeiXinChargeController {
 		}
 	}
 	/**
-	 * 支付返回结果
+	 * 充值返回结果
 	 * @param map
 	 * @return
 	 * @throws IOException 
 	 */
-	@RequestMapping(value="/payresult",method=RequestMethod.POST,produces = "application/x-www-form-urlencoded;charset=UTF-8")
+	@RequestMapping(value="/payresult",method=RequestMethod.GET,produces = "application/x-www-form-urlencoded;charset=UTF-8")
 	public @ResponseBody void PayResult(HttpServletRequest request,HttpServletResponse response) throws IOException{
 		String reqParams = StreamUtil.read(request.getInputStream());
-		logger.info("-------支付结果:"+reqParams);
-		StringBuffer sb = new StringBuffer("<xml><return_code>SUCCESS</return_code><return_msg>OK</return_msg></xml>");
-		response.getWriter().append(sb.toString());
-	}
-	/**
-	 * 支付成功处理
-	 * @param map
-	 * @return
-	 * @throws IOException 
-	 */
-	@RequestMapping(value="/paysuccess",method=RequestMethod.POST,produces = "application/x-www-form-urlencoded;charset=UTF-8")
-	public @ResponseBody void PaySuccess(HttpServletRequest request){
-		String requestPayment = request.getParameter("requestPayment");
-		String orderId = request.getParameter("orderId");
-		logger.info("-------充值结果:"+requestPayment);
-		if(requestPayment.equals("requestPayment:ok")){
+		logger.info("-------充值结果:"+reqParams);
+		Map<String,Object> map=JsonUtil.getMap4Json(reqParams);
+		String return_code=map.get("return_code").toString();
+		if(return_code.equals("SUCCESS")){
+			String orderId=map.get("out_trade_no").toString();
 			//1,修改订单
 			VendOrder vendOrder=vendOrderService.getOne(orderId);
 			if(vendOrder!=null){
@@ -215,12 +216,23 @@ public class WeiXinChargeController {
 				vendOrderService.editVendOrder(vendOrder);
 			}
 			//2,修改账户
+			/**优惠券*/
+			double orderamount=vendOrder.getAmount().doubleValue();//订单金额
+			double yuamount=orderamount;
+			VendCoupon vendCoupon=new VendCoupon();
+			if(vendOrder.getExtend4()!=null&&!"".equals(vendOrder.getExtend4())){
+				vendCoupon=vendCouponService.getOne(Function.getInt(vendOrder.getExtend4(), 0));
+				if(vendCoupon!=null){
+					if(orderamount>=Double.valueOf(vendCoupon.getExtend3())){
+						yuamount=yuamount+Double.valueOf(vendCoupon.getExtend4());
+					}
+				}
+			}
 			/**消费用户账户*/
 			Date updateTime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());//创建时间
 			VendAccount vendAccount=vendAccountService.getOne(vendOrder.getUsercode());//商户账户
-			double orderamount=vendOrder.getAmount().doubleValue();//订单金额
 			double amountpre1=vendAccount.getOwnAmount().doubleValue();
-			BigDecimal totalamount=BigDecimal.valueOf(orderamount+amountpre1);
+			BigDecimal totalamount=BigDecimal.valueOf(yuamount+amountpre1);
 			vendAccount.setOwnAmount(totalamount);
 			String moneyencrypt=Function.getEncrypt(BigDecimal.valueOf(orderamount+amountpre1).toString());
 			vendAccount.setMoneyencrypt(Function.getEncrypt(moneyencrypt));
@@ -231,6 +243,63 @@ public class WeiXinChargeController {
 			vendAccountDetail1.setUsercode(vendOrder.getUsercode());
 			vendAccountDetail1.setAmount(BigDecimal.valueOf(orderamount));
 			vendAccountDetail1.setType("1");//充值
+			if(vendCoupon.getCouponName()!=null){
+				vendAccountDetail1.setExtend1(vendCoupon.getCouponName());
+			}
+			vendAccountDetail1.setCreateTime(updateTime);
+			vendAccountDetailService.insertVendAccountDetail(vendAccountDetail1);
+		}
+		StringBuffer sb = new StringBuffer("<xml><return_code>SUCCESS</return_code><return_msg>OK</return_msg></xml>");
+		response.getWriter().append(sb.toString());
+	}
+	/**
+	 * 充值成功处理
+	 * @param map
+	 * @return
+	 * @throws IOException 
+	 */
+	@RequestMapping(value="/paysuccess",method=RequestMethod.POST,produces = "application/x-www-form-urlencoded;charset=UTF-8")
+	public @ResponseBody void PaySuccess(HttpServletRequest request){
+		String requestPayment = request.getParameter("requestPayment");
+		String orderId = request.getParameter("orderId");
+		int yhid = Function.getInt(request.getParameter("yhid"),0);//优惠券ID
+		int hdid = Function.getInt(request.getParameter("hdid"),0);//活动ID
+		logger.info("-------充值结果:"+requestPayment);
+		if(requestPayment.equals("requestPayment:ok")){
+			//1,修改订单
+			VendOrder vendOrder=vendOrderService.getOne(orderId);
+			if(vendOrder!=null){
+				vendOrder.setOrderstate("1");
+				vendOrderService.editVendOrder(vendOrder);
+			}
+			//2,修改账户
+			/**优惠券*/
+			VendCoupon vendCoupon=vendCouponService.getOne(hdid);
+			double orderamount=vendOrder.getAmount().doubleValue();//订单金额
+			double yuamount=orderamount;
+			if(vendCoupon!=null){
+				if(orderamount>=Double.valueOf(vendCoupon.getExtend3())){
+					yuamount=yuamount+Double.valueOf(vendCoupon.getExtend4());
+				}
+			}
+			/**消费用户账户*/
+			Date updateTime=DateUtil.parseDateTime(DateUtil.getCurrentDateTimeStr());//创建时间
+			VendAccount vendAccount=vendAccountService.getOne(vendOrder.getUsercode());//商户账户
+			double amountpre1=vendAccount.getOwnAmount().doubleValue();
+			BigDecimal totalamount=BigDecimal.valueOf(yuamount+amountpre1);
+			vendAccount.setOwnAmount(totalamount);
+			String moneyencrypt=Function.getEncrypt(BigDecimal.valueOf(orderamount+amountpre1).toString());
+			vendAccount.setMoneyencrypt(Function.getEncrypt(moneyencrypt));
+			vendAccount.setUpdateTime(updateTime);
+			vendAccountService.editVendAccount(vendAccount);
+			
+			VendAccountDetail vendAccountDetail1=new VendAccountDetail();
+			vendAccountDetail1.setUsercode(vendOrder.getUsercode());
+			vendAccountDetail1.setAmount(BigDecimal.valueOf(orderamount));
+			vendAccountDetail1.setType("1");//充值
+			if(vendCoupon.getCouponName()!=null){
+				vendAccountDetail1.setExtend1(vendCoupon.getCouponName());
+			}
 			vendAccountDetail1.setCreateTime(updateTime);
 			vendAccountDetailService.insertVendAccountDetail(vendAccountDetail1);
 			

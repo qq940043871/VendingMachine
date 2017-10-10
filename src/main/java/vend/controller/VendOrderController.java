@@ -60,6 +60,18 @@ public class VendOrderController{
 		}
 		logger.info(page.toString());
 		logger.info(vendOrder.toString());
+		if(vendOrder.getUsercode()!=null){
+			model.addAttribute("usercode",vendOrder.getUsercode());
+		}
+		if(vendOrder.getShopusercode()!=null){
+			model.addAttribute("shopusercode",vendOrder.getShopusercode());
+		}
+		if(beginTime!=null){
+			model.addAttribute("beginTime",beginTime);
+		}
+		if(endTime!=null){
+			model.addAttribute("beginTime",endTime);
+		}
 		List<VendOrder> vendOrders = vendOrderService.listVendOrder(vendOrder,beginTime,endTime, page);
 		model.addAttribute("vendOrders",vendOrders);
 		return "manage/order/order_list";
@@ -85,6 +97,7 @@ public class VendOrderController{
 		}
 		VendOrder vendOrder=new VendOrder();
 		vendOrder.setUsercode(map.get("usercode"));
+		logger.info("得到消费用户订单数据"+map.get("usercode"));
 		if(!"".equals(ordertype)){
 			vendOrder.setExtend1(ordertype);
 		}
@@ -101,6 +114,7 @@ public class VendOrderController{
 			vendOrder1.setExtend3(DateUtil.formatTime(vendOrder1.getCreateTime()));
 		}
 		//List<CodeLibrary> ordertypes =codeLibraryService.selectByCodeNo("ORDERTYPE");
+		logger.info("得到消费用户订单数据vendOrders"+vendOrders.size());
 		resultmap.put("vendOrders", vendOrders);
 		resultmap.put("page", page);
 		return resultmap;

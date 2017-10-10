@@ -61,6 +61,9 @@
 		                  <th>用户名</th>
 		                  <th>账户余额</th>
 		                  <th>创建时间</th>
+		                  <shiro:hasRole name="代理后台">
+		                   <th>提现</th>
+		                  </shiro:hasRole>
 		                </tr>
 			         </thead>
 			         <tbody>
@@ -71,6 +74,12 @@
 					          <td>${vendAccount.usercode}</td>
 			                  <td>${vendAccount.ownAmount}</td>
 			                  <td><fmt:formatDate value="${vendAccount.createTime}" pattern="yyyy-MM-dd HH:mm:ss"/></td>
+			                 <shiro:hasRole name="代理后台">
+			                  <td><a href="javascript:void(0);" onclick="txfirm('${vendAccount.usercode}');" class="btn btn-danger"/>提现</a></td>
+			                  </shiro:hasRole>
+			                  <shiro:hasRole name="商家">
+			                  <td><a href="javascript:void(0);" onclick="txfirm('${vendAccount.usercode}');" class="btn btn-danger"/>提现</a></td>
+			                  </shiro:hasRole>
 			                </tr>
 			           </c:forEach>
 			         </tbody>
@@ -82,7 +91,7 @@
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage -1}')">上一页</a></li>
 	                <li class="active"> <a href="#">${page.currentPage}/${page.totalPage}</a> </li>
 	                <li><a href="javascript:changeCurrentPage('${page.currentPage+1}')">下一页</a></li>
-	                <li><a href="javascript:changeCurrentPage('${page.totalPage}">尾页</a></li>
+	                  <li><a href="javascript:changeCurrentPage('${page.totalPage}')">尾页</a></li>
 	                <li>&nbsp;&nbsp;&nbsp;&nbsp;跳至第&nbsp; 
 	                   <input id="currentPageText" type='text' value='${page.currentPage}' style="width:27px;height:15px;" />&nbsp;页&nbsp;
 	                   <a href="javascript:changeCurrentPage2()" style="float:right;">GO</a>
@@ -104,9 +113,9 @@
 <!--end-Footer-part-->
 <%@ include file="../../common/common_js.jsp" %>
 <script type="text/javascript">
-function delconfirm(usercode){
-	 if(confirm("确定要删除吗?")){
-		window.location.href=basePath+"account/"+usercode+"/del";
+function txfirm(usercode){
+	 if(confirm("确定要提现吗?")){
+		window.location.href=basePath+"account/"+usercode+"/draw";
 	 }
 }
 </script>
